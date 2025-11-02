@@ -38,8 +38,50 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash);
 }
 
+function normalizeTotpSecret(secret: string | undefined): string | null {
+  if (!secret) {
+    return null;
+  }
+  const normalized = secret.replace(/\s+/g, '').toUpperCase();
+  return normalized.length > 0 ? normalized : null;
+}
+
 export function verifyTotp(token: string, secret: string): boolean {
-  return authenticator.check(token, secret);
+  const normalizedSecret = normalizeTotpSecret(secret);
+  if (!normalizedSecret) {
+    return false;
+  }
+  try {
+    return authenticator.check(token, normalizedSecret);
+  } catch (error) {
+    console.warn('Failed to verify TOTP token', error);
+    return false;
+  }
+}
+
+export function verifyTotpWithBackups(
+  token: string,
+  secret?: string,
+  backupHashes?: string[]
+): { valid: boolean; usedBackup?: string } {
+  const trimmedToken = token.trim();
+  if (trimmedToken.length === 0) {
+    return { valid: false };
+  }
+
+  if (secret && verifyTotp(trimmedToken, secret)) {
+    return { valid: true };
+  }
+
+  if (backupHashes?.length) {
+    const tokenHash = hashLegacyPassword(trimmedToken);
+    const match = backupHashes.find((entry) => entry?.toLowerCase() === tokenHash);
+    if (match) {
+      return { valid: true, usedBackup: match };
+    }
+  }
+
+  return { valid: false };
 }
 
 export type SessionPayload = {

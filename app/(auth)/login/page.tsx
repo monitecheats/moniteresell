@@ -11,6 +11,7 @@ import {
   DialogContent,
   DialogTitle,
   Link,
+  Paper,
   Stack,
   TextField,
   Typography
@@ -107,53 +108,124 @@ export default function LoginPage() {
   };
 
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ display: 'flex', alignItems: 'center', minHeight: '100vh' }}>
-        <Box
-          component="form"
-          onSubmit={handleLogin}
+    <Box
+      sx={{
+        minHeight: '100vh',
+        bgcolor: 'background.default',
+        display: 'flex',
+        alignItems: 'center',
+        py: { xs: 6, md: 8 }
+      }}
+    >
+      <Container maxWidth="md">
+        <Paper
+          variant="outlined"
           sx={{
-            width: '100%',
-            p: 4,
-            borderRadius: 3,
-            boxShadow: (theme) => theme.shadows[4],
-            backgroundColor: (theme) => theme.palette.background.paper
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            borderRadius: 4,
+            overflow: 'hidden',
+            minHeight: { md: 520 }
           }}
         >
-          <Stack spacing={3}>
+          <Box
+            sx={{
+              flexBasis: { xs: '100%', md: '40%' },
+              display: { xs: 'none', md: 'flex' },
+              flexDirection: 'column',
+              justifyContent: 'center',
+              gap: 3,
+              p: 5,
+              background: 'linear-gradient(135deg, #1a73e8, #174ea6)',
+              color: '#fff'
+            }}
+          >
+            <Box
+              sx={{
+                width: 56,
+                height: 56,
+                borderRadius: 2,
+                bgcolor: 'rgba(255,255,255,0.12)',
+                display: 'grid',
+                placeItems: 'center',
+                fontWeight: 700,
+                fontSize: 24,
+                letterSpacing: 1.5
+              }}
+            >
+              M
+            </Box>
+            <Box>
+              <Typography variant="h4" fontWeight={700} gutterBottom>
+                Monite Reseller
+              </Typography>
+              <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                Sign in to a Google-inspired console with calm surfaces and confident
+                typography.
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box
+            component="form"
+            onSubmit={handleLogin}
+            sx={{
+              flex: 1,
+              p: { xs: 4, sm: 6 },
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              gap: 3
+            }}
+          >
             <Box>
               <Typography component="h1" variant="h4" fontWeight={700} gutterBottom>
                 Sign in
               </Typography>
-              <Typography color="text.secondary">Access your reseller dashboard securely.</Typography>
+              <Typography color="text.secondary">
+                Access your reseller dashboard securely with username and password.
+              </Typography>
             </Box>
             {error && <Alert severity="error">{error}</Alert>}
-            <TextField
-              label="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              autoComplete="username"
-              fullWidth
-              required
-            />
-            <TextField
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              fullWidth
-              required
-            />
-            <Button type="submit" variant="contained" size="large" disabled={loading || !csrfToken}>
-              {loading ? 'Signing in...' : 'Sign in'}
-            </Button>
-            <Typography variant="body2" textAlign="center">
-              Don&apos;t have an account? <Link href="/register">Create one</Link>
-            </Typography>
-          </Stack>
-        </Box>
-      </Box>
+            <Stack spacing={2.5}>
+              <TextField
+                label="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoComplete="username"
+                fullWidth
+                required
+              />
+              <TextField
+                label="Password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                fullWidth
+                required
+              />
+            </Stack>
+            <Stack spacing={2}>
+              <Button
+                type="submit"
+                variant="contained"
+                size="large"
+                disabled={loading || !csrfToken}
+                sx={{ py: 1.2 }}
+              >
+                {loading ? 'Signing in…' : 'Sign in'}
+              </Button>
+              <Typography variant="body2" textAlign="center" color="text.secondary">
+                Don&apos;t have an account?{' '}
+                <Link href="/register" sx={{ fontWeight: 600 }}>
+                  Create one
+                </Link>
+              </Typography>
+            </Stack>
+          </Box>
+        </Paper>
+      </Container>
 
       <Dialog
         open={totpStep}
@@ -164,14 +236,14 @@ export default function LoginPage() {
         }}
         aria-labelledby="totp-dialog-title"
       >
-        <DialogTitle id="totp-dialog-title">Enter 6-digit code</DialogTitle>
+        <DialogTitle id="totp-dialog-title">Two-step verification</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <Typography variant="body2" color="text.secondary">
-              Two-factor authentication is enabled. Enter the code from your authenticator app.
+              Enter the 6-digit code from your authenticator app to continue.
             </Typography>
             <TextField
-              label="TOTP code"
+              label="Verification code"
               value={totp}
               onChange={(e) => setTotp(e.target.value.replace(/[^0-9]/g, ''))}
               inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 6 }}
@@ -181,7 +253,7 @@ export default function LoginPage() {
             />
           </Stack>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
           <Button
             onClick={() => {
               setTotpStep(false);
@@ -196,6 +268,6 @@ export default function LoginPage() {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </Box>
   );
 }

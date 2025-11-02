@@ -8,6 +8,7 @@ import {
   Card,
   CardContent,
   CircularProgress,
+  Container,
   Divider,
   FormControl,
   Grid,
@@ -15,6 +16,7 @@ import {
   MenuItem,
   Paper,
   Select,
+  Skeleton,
   Stack,
   Table,
   TableBody,
@@ -28,6 +30,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { useRouter } from 'next/navigation';
 import ThemeToggle from '@/components/ThemeToggle';
+import { useTheme } from '@mui/material/styles';
 
 interface Metrics {
   total: number;
@@ -62,6 +65,7 @@ const deviceOptions = [
 
 export default function DashboardView() {
   const router = useRouter();
+  const theme = useTheme();
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [metricsError, setMetricsError] = useState<string | null>(null);
   const [keys, setKeys] = useState<KeyItem[]>([]);
@@ -168,13 +172,26 @@ export default function DashboardView() {
   }, [keys]);
 
   const renderMetricCard = (title: string, value: number | undefined, color: string) => (
-    <Card sx={{ height: '100%', background: color }}>
-      <CardContent>
-        <Typography variant="overline" sx={{ color: 'rgba(255,255,255,0.8)' }}>
+    <Card
+      variant="outlined"
+      sx={{
+        position: 'relative',
+        height: '100%',
+        borderRadius: 4,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between'
+      }}
+    >
+      <Box sx={{ position: 'absolute', inset: 0, borderRadius: 4, overflow: 'hidden', pointerEvents: 'none' }}>
+        <Box sx={{ height: 4, width: '100%', bgcolor: color }} />
+      </Box>
+      <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1, pt: 3, position: 'relative', zIndex: 1 }}>
+        <Typography variant="subtitle2" color="text.secondary">
           {title}
         </Typography>
-        <Typography variant="h3" sx={{ color: '#fff', mt: 1, fontWeight: 700 }}>
-          {value ?? '-'}
+        <Typography variant="h4" fontWeight={700} color="text.primary">
+          {value ?? '—'}
         </Typography>
       </CardContent>
     </Card>
@@ -183,155 +200,203 @@ export default function DashboardView() {
   const dashboardReady = metrics && !initialLoading;
 
   return (
-    <Stack spacing={4} sx={{ p: { xs: 2, md: 4 } }}>
-      <Paper
-        elevation={0}
-        sx={{
-          p: 3,
-          borderRadius: 3,
-          display: 'flex',
-          flexDirection: { xs: 'column', md: 'row' },
-          alignItems: { xs: 'flex-start', md: 'center' },
-          justifyContent: 'space-between',
-          gap: 2
-        }}
-      >
-        <Box>
-          <Typography variant="h5" fontWeight={700} gutterBottom>
-            Welcome back{user ? `, ${user.name}` : ''}
-          </Typography>
-          <Typography color="text.secondary">
-            Overview of your subscription keys activity in real time.
-          </Typography>
-        </Box>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <ThemeToggle />
-          <Button
+    <Box component="main" sx={{ bgcolor: 'background.default', minHeight: '100vh', py: { xs: 4, md: 6 } }}>
+      <Container maxWidth="lg">
+        <Stack spacing={4}>
+          <Paper
             variant="outlined"
-            color="inherit"
-            startIcon={<LogoutIcon />}
-            onClick={handleLogout}
-          >
-            Logout
-          </Button>
-        </Stack>
-      </Paper>
-
-      {metricsError && <Alert severity="error">{metricsError}</Alert>}
-
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={3}>
-          {dashboardReady ? (
-            renderMetricCard('Total keys', metrics?.total, 'linear-gradient(135deg, #0052cc, #2f6eff)')
-          ) : (
-            <Card><CardContent><CircularProgress /></CardContent></Card>
-          )}
-        </Grid>
-        <Grid item xs={12} md={3}>
-          {dashboardReady ? (
-            renderMetricCard('Active', metrics?.active, 'linear-gradient(135deg, #00796b, #26a69a)')
-          ) : (
-            <Card><CardContent><CircularProgress /></CardContent></Card>
-          )}
-        </Grid>
-        <Grid item xs={12} md={3}>
-          {dashboardReady ? (
-            renderMetricCard('Pending', metrics?.pending, 'linear-gradient(135deg, #6a1b9a, #9c27b0)')
-          ) : (
-            <Card><CardContent><CircularProgress /></CardContent></Card>
-          )}
-        </Grid>
-        <Grid item xs={12} md={3}>
-          {dashboardReady ? (
-            renderMetricCard('Expired', metrics?.expired, 'linear-gradient(135deg, #c62828, #ef5350)')
-          ) : (
-            <Card><CardContent><CircularProgress /></CardContent></Card>
-          )}
-        </Grid>
-      </Grid>
-
-      <Paper elevation={0} sx={{ p: 3, borderRadius: 3 }}>
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems={{ md: 'center' }}>
-          <Typography variant="h6" fontWeight={600} flexGrow={1}>
-            Recent activity
-          </Typography>
-          <TextField
-            label="Filter by game UID"
-            value={gameFilter}
-            onChange={(e) => setGameFilter(e.target.value)}
-            size="small"
-            sx={{ minWidth: 160 }}
-          />
-          <FormControl sx={{ minWidth: 160 }} size="small">
-            <InputLabel id="device-select">Device</InputLabel>
-            <Select
-              labelId="device-select"
-              value={deviceFilter}
-              label="Device"
-              onChange={(event) => setDeviceFilter(event.target.value)}
-            >
-              {deviceOptions.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
-            onClick={() => {
-              fetchMetrics();
-              fetchKeys();
+            sx={{
+              p: { xs: 3, md: 4 },
+              borderRadius: 4,
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 3,
+              alignItems: 'center',
+              justifyContent: 'space-between'
             }}
           >
-            Refresh
-          </Button>
+            <Box>
+              <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1 }}>
+                Reseller Console
+              </Typography>
+              <Typography variant="h4" fontWeight={700} gutterBottom>
+                Welcome back{user ? `, ${user.name}` : ''}
+              </Typography>
+              <Typography color="text.secondary" maxWidth={420}>
+                Track key performance, monitor activity, and manage your catalogue with a
+                workspace inspired by Google&apos;s clean, focused surfaces.
+              </Typography>
+            </Box>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <ThemeToggle />
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<LogoutIcon />}
+                onClick={handleLogout}
+              >
+                Sign out
+              </Button>
+            </Stack>
+          </Paper>
+
+          {metricsError && <Alert severity="error">{metricsError}</Alert>}
+
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={3}>
+              {dashboardReady ? (
+                renderMetricCard('Total keys', metrics?.total, theme.palette.primary.main)
+              ) : (
+                <Card variant="outlined" sx={{ borderRadius: 4 }}>
+                  <CardContent>
+                    <Skeleton variant="text" height={28} width="60%" />
+                    <Skeleton variant="text" height={48} width="40%" />
+                  </CardContent>
+                </Card>
+              )}
+            </Grid>
+            <Grid item xs={12} md={3}>
+              {dashboardReady ? (
+                renderMetricCard('Active', metrics?.active, theme.palette.success.main)
+              ) : (
+                <Card variant="outlined" sx={{ borderRadius: 4 }}>
+                  <CardContent>
+                    <Skeleton variant="text" height={28} width="60%" />
+                    <Skeleton variant="text" height={48} width="40%" />
+                  </CardContent>
+                </Card>
+              )}
+            </Grid>
+            <Grid item xs={12} md={3}>
+              {dashboardReady ? (
+                renderMetricCard('Pending', metrics?.pending, theme.palette.warning.main)
+              ) : (
+                <Card variant="outlined" sx={{ borderRadius: 4 }}>
+                  <CardContent>
+                    <Skeleton variant="text" height={28} width="60%" />
+                    <Skeleton variant="text" height={48} width="40%" />
+                  </CardContent>
+                </Card>
+              )}
+            </Grid>
+            <Grid item xs={12} md={3}>
+              {dashboardReady ? (
+                renderMetricCard('Expired', metrics?.expired, theme.palette.error.main)
+              ) : (
+                <Card variant="outlined" sx={{ borderRadius: 4 }}>
+                  <CardContent>
+                    <Skeleton variant="text" height={28} width="60%" />
+                    <Skeleton variant="text" height={48} width="40%" />
+                  </CardContent>
+                </Card>
+              )}
+            </Grid>
+          </Grid>
+
+          <Card variant="outlined" sx={{ borderRadius: 4 }}>
+            <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+              <Stack
+                direction={{ xs: 'column', md: 'row' }}
+                spacing={2}
+                alignItems={{ xs: 'stretch', md: 'center' }}
+              >
+                <Box sx={{ flexGrow: 1 }}>
+                  <Typography variant="h6" fontWeight={600} gutterBottom>
+                    Recent activity
+                  </Typography>
+                  <Typography color="text.secondary" variant="body2">
+                    Filter keys by game or device to focus on a particular cohort.
+                  </Typography>
+                </Box>
+                <TextField
+                  label="Filter by game UID"
+                  value={gameFilter}
+                  onChange={(e) => setGameFilter(e.target.value)}
+                  size="small"
+                  sx={{ minWidth: 180 }}
+                />
+                <FormControl sx={{ minWidth: 160 }} size="small">
+                  <InputLabel id="device-select">Device</InputLabel>
+                  <Select
+                    labelId="device-select"
+                    value={deviceFilter}
+                    label="Device"
+                    onChange={(event) => setDeviceFilter(event.target.value)}
+                  >
+                    {deviceOptions.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <Button
+                  variant="text"
+                  startIcon={<RefreshIcon />}
+                  onClick={() => {
+                    fetchMetrics();
+                    fetchKeys();
+                  }}
+                >
+                  Refresh
+                </Button>
+              </Stack>
+
+              <Divider sx={{ my: 3 }} />
+
+              {keysError && <Alert severity="error">{keysError}</Alert>}
+
+              {keysLoading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+                  <CircularProgress />
+                </Box>
+              ) : formattedKeys.length === 0 ? (
+                <Typography color="text.secondary" textAlign="center">
+                  No activity to display.
+                </Typography>
+              ) : (
+                <Table
+                  size="medium"
+                  sx={{
+                    '& th': {
+                      textTransform: 'uppercase',
+                      fontSize: 12,
+                      color: 'text.secondary'
+                    }
+                  }}
+                >
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Key</TableCell>
+                      <TableCell>Device</TableCell>
+                      <TableCell>Game</TableCell>
+                      <TableCell>Game UID</TableCell>
+                      <TableCell>Expires</TableCell>
+                      <TableCell>Created</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {formattedKeys.map((item) => (
+                      <TableRow key={item.id} hover>
+                        <TableCell sx={{ fontWeight: 500 }}>{item.id}</TableCell>
+                        <TableCell>{item.device ?? '—'}</TableCell>
+                        <TableCell>{item.game ?? '—'}</TableCell>
+                        <TableCell>{item.game_uid ?? '—'}</TableCell>
+                        <TableCell>
+                          {item.expiresDate ? item.expiresDate.toLocaleString() : '—'}
+                        </TableCell>
+                        <TableCell>
+                          {item.createdDate ? item.createdDate.toLocaleString() : '—'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
         </Stack>
-
-        <Divider sx={{ my: 3 }} />
-
-        {keysError && <Alert severity="error">{keysError}</Alert>}
-
-        {keysLoading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-            <CircularProgress />
-          </Box>
-        ) : formattedKeys.length === 0 ? (
-          <Typography color="text.secondary" textAlign="center">
-            No activity to display.
-          </Typography>
-        ) : (
-          <Table size="small" sx={{ '& th': { textTransform: 'uppercase', fontSize: 12 } }}>
-            <TableHead>
-              <TableRow>
-                <TableCell>Key</TableCell>
-                <TableCell>Device</TableCell>
-                <TableCell>Game</TableCell>
-                <TableCell>Game UID</TableCell>
-                <TableCell>Expires</TableCell>
-                <TableCell>Created</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {formattedKeys.map((item) => (
-                <TableRow key={item.id} hover>
-                  <TableCell>{item.id}</TableCell>
-                  <TableCell>{item.device ?? '—'}</TableCell>
-                  <TableCell>{item.game ?? '—'}</TableCell>
-                  <TableCell>{item.game_uid ?? '—'}</TableCell>
-                  <TableCell>
-                    {item.expiresDate ? item.expiresDate.toLocaleString() : '—'}
-                  </TableCell>
-                  <TableCell>
-                    {item.createdDate ? item.createdDate.toLocaleString() : '—'}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </Paper>
-    </Stack>
+      </Container>
+    </Box>
   );
 }

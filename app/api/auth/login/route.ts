@@ -5,7 +5,7 @@ import {
   createSessionToken,
   setSessionCookie,
   verifyPassword,
-  verifyTotp,
+  verifyTotpWithBackups,
   SessionPayload
 } from '@/lib/auth';
 import { isRateLimited, resetRateLimit } from '@/lib/rate-limit';
@@ -48,15 +48,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    const totpConfig = reseller.totp as { enabled?: boolean; secret?: string } | undefined;
+    const totpConfig = reseller.totp as
+      | { enabled?: boolean; secret?: string; backup_hashes?: string[] }
+      | undefined;
     if (totpConfig?.enabled) {
       if (!totp) {
         return NextResponse.json({ error: 'TOTP required', totpRequired: true }, { status: 401 });
       }
 
-      const isTotpValid = totpConfig.secret ? verifyTotp(totp, totpConfig.secret) : false;
-      if (!isTotpValid) {
+      const backupHashes = Array.isArray(totpConfig.backup_hashes)
+        ? (totpConfig.backup_hashes as string[])
+        : undefined;
+      const totpResult = verifyTotpWithBackups(totp, totpConfig.secret, backupHashes);
+      if (!totpResult.valid) {
         return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+      }
+
+      if (totpResult.usedBackup) {
+        await db
+          .collection('resellers')
+          .updateOne({ _id: username }, { $pull: { 'totp.backup_hashes': totpResult.usedBackup } });
       }
     }
 

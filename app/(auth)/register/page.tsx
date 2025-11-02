@@ -7,6 +7,7 @@ import {
   Button,
   Container,
   Link,
+  Paper,
   Stack,
   TextField,
   Typography
@@ -80,26 +81,81 @@ export default function RegisterPage() {
   };
 
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ display: 'flex', alignItems: 'center', minHeight: '100vh' }}>
-        <Box
-          component="form"
-          onSubmit={handleSubmit}
+    <Box
+      sx={{
+        minHeight: '100vh',
+        bgcolor: 'background.default',
+        display: 'flex',
+        alignItems: 'center',
+        py: { xs: 6, md: 8 }
+      }}
+    >
+      <Container maxWidth="md">
+        <Paper
+          variant="outlined"
           sx={{
-            width: '100%',
-            p: 4,
-            borderRadius: 3,
-            boxShadow: (theme) => theme.shadows[4],
-            backgroundColor: (theme) => theme.palette.background.paper
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            borderRadius: 4,
+            overflow: 'hidden'
           }}
         >
-          <Stack spacing={3}>
+          <Box
+            sx={{
+              flexBasis: { xs: '100%', md: '40%' },
+              display: { xs: 'none', md: 'flex' },
+              flexDirection: 'column',
+              justifyContent: 'center',
+              gap: 3,
+              p: 5,
+              background: 'linear-gradient(135deg, #34a853, #0f9d58)',
+              color: '#fff'
+            }}
+          >
+            <Box
+              sx={{
+                width: 56,
+                height: 56,
+                borderRadius: 2,
+                bgcolor: 'rgba(255,255,255,0.12)',
+                display: 'grid',
+                placeItems: 'center',
+                fontWeight: 700,
+                fontSize: 24,
+                letterSpacing: 1.5
+              }}
+            >
+              M
+            </Box>
+            <Box>
+              <Typography variant="h4" fontWeight={700} gutterBottom>
+                Create your account
+              </Typography>
+              <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                Start managing subscriptions with a layout inspired by Google&apos;s productivity
+                tools.
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box
+            component="form"
+            onSubmit={handleSubmit}
+            sx={{
+              flex: 1,
+              p: { xs: 4, sm: 6 },
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              gap: 3
+            }}
+          >
             <Box>
               <Typography component="h1" variant="h4" fontWeight={700} gutterBottom>
                 Create account
               </Typography>
               <Typography color="text.secondary">
-                Set up your reseller workspace. Password must include at least 10 characters with letters and numbers.
+                Use a strong password (at least 10 characters) to keep your workspace secure.
               </Typography>
             </Box>
             {error?.error && <Alert severity="error">{error.error}</Alert>}
@@ -108,54 +164,71 @@ export default function RegisterPage() {
                 Account created! Redirecting to sign in...
               </Alert>
             )}
-            <TextField
-              label="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              autoComplete="username"
-              helperText={error?.fieldErrors?.username?.[0] ?? 'Use lowercase letters, numbers, dots or dashes.'}
-              error={Boolean(error?.fieldErrors?.username)}
-              required
-            />
-            <TextField
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-              helperText={error?.fieldErrors?.email?.[0] ?? ''}
-              error={Boolean(error?.fieldErrors?.email)}
-              required
-            />
-            <TextField
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="new-password"
-              helperText={error?.fieldErrors?.password?.[0] ?? 'Minimum 10 characters with letters and numbers.'}
-              error={Boolean(error?.fieldErrors?.password)}
-              required
-            />
-            <TextField
-              label="Repeat password"
-              type="password"
-              value={repeatPassword}
-              onChange={(e) => setRepeatPassword(e.target.value)}
-              autoComplete="new-password"
-              helperText={error?.fieldErrors?.repeatPassword?.[0] ?? ''}
-              error={Boolean(error?.fieldErrors?.repeatPassword)}
-              required
-            />
-            <Button type="submit" variant="contained" size="large" disabled={loading || !csrfToken}>
-              {loading ? 'Creating account...' : 'Create account'}
-            </Button>
-            <Typography variant="body2" textAlign="center">
-              Already have an account? <Link href="/login">Sign in</Link>
-            </Typography>
-          </Stack>
-        </Box>
-      </Box>
-    </Container>
+            <Stack spacing={2.5}>
+              <TextField
+                label="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoComplete="username"
+                helperText={
+                  error?.fieldErrors?.username?.[0] ?? 'Use lowercase letters, numbers, dots or dashes.'
+                }
+                error={Boolean(error?.fieldErrors?.username)}
+                required
+              />
+              <TextField
+                label="Email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                helperText={error?.fieldErrors?.email?.[0] ?? ''}
+                error={Boolean(error?.fieldErrors?.email)}
+                required
+              />
+              <TextField
+                label="Password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+                helperText={
+                  error?.fieldErrors?.password?.[0] ?? 'Minimum 10 characters with letters and numbers.'
+                }
+                error={Boolean(error?.fieldErrors?.password)}
+                required
+              />
+              <TextField
+                label="Repeat password"
+                type="password"
+                value={repeatPassword}
+                onChange={(e) => setRepeatPassword(e.target.value)}
+                autoComplete="new-password"
+                helperText={error?.fieldErrors?.repeatPassword?.[0] ?? ''}
+                error={Boolean(error?.fieldErrors?.repeatPassword)}
+                required
+              />
+            </Stack>
+            <Stack spacing={2}>
+              <Button
+                type="submit"
+                variant="contained"
+                size="large"
+                disabled={loading || !csrfToken}
+                sx={{ py: 1.2 }}
+              >
+                {loading ? 'Creating account…' : 'Create account'}
+              </Button>
+              <Typography variant="body2" textAlign="center" color="text.secondary">
+                Already have an account?{' '}
+                <Link href="/login" sx={{ fontWeight: 600 }}>
+                  Sign in
+                </Link>
+              </Typography>
+            </Stack>
+          </Box>
+        </Paper>
+      </Container>
+    </Box>
   );
 }
