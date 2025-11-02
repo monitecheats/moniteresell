@@ -1,4 +1,4 @@
-import LRUCache from 'lru-cache';
+import { LRUCache } from 'lru-cache';
 
 const windowMs = Number(process.env.RATE_LIMIT_WINDOW ?? 60_000);
 const maxAttempts = Number(process.env.RATE_LIMIT_MAX ?? 5);
