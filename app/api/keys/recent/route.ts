@@ -1,8 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { Document, WithId } from 'mongodb';
 import { getDb } from '@/lib/mongodb';
 import { getSessionFromRequest } from '@/lib/auth';
 import { recentKeysQuerySchema } from '@/lib/schemas';
 import { ensureIndexes } from '@/lib/indexes';
+import { canViewAllSubscriptions } from '@/lib/rbac';
+
+type KeyStatus = 'active' | 'expired' | 'pending' | 'disabled';
+
+type RawKey = WithId<Document> & {
+  expires_at?: unknown;
+  disabled?: unknown;
+  device?: unknown;
+};
+
+function resolveStatus(item: RawKey, now: number): KeyStatus {
+  if (item.disabled === true) {
+    return 'disabled';
+  }
+  if (item.expires_at === 'pending') {
+    return 'pending';
+  }
+  if (typeof item.expires_at === 'number') {
+    if (item.expires_at <= now) {
+      return 'expired';
+    }
+    if (item.expires_at > now && (item.device == null || item.device === '')) {
+      return 'pending';
+    }
+    return 'active';
+  }
+  return 'pending';
+}
 
 export async function GET(request: NextRequest) {
   const session = getSessionFromRequest(request);
@@ -29,6 +58,10 @@ export async function GET(request: NextRequest) {
     $or: [{ disabled: { $exists: false } }, { disabled: { $ne: true } }]
   };
 
+  if (!canViewAllSubscriptions(session)) {
+    match.generated_by = session.sub;
+  }
+
   if (game_uid) {
     match.game_uid = game_uid;
   }
@@ -36,6 +69,8 @@ export async function GET(request: NextRequest) {
   if (device) {
     match.device = device;
   }
+
+  const now = Math.floor(Date.now() / 1000);
 
   const results = await collection
     .find(match)
@@ -51,7 +86,8 @@ export async function GET(request: NextRequest) {
     created_at: item.created_at instanceof Date ? item.created_at.toISOString() : null,
     updated_at: item.updated_at instanceof Date ? item.updated_at.toISOString() : null,
     game: item.game ?? null,
-    game_uid: item.game_uid ?? null
+    game_uid: item.game_uid ?? null,
+    status: resolveStatus(item, now)
   }));
 
   return NextResponse.json({ keys });

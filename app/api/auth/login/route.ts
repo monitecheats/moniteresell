@@ -9,25 +9,26 @@ import {
   SessionPayload
 } from '@/lib/auth';
 import { isRateLimited, resetRateLimit } from '@/lib/rate-limit';
-
-const CSRF_COOKIE = 'monite_csrf';
+import { validateCsrf } from '@/lib/csrf';
+import { audit, security } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
-    const csrfHeader = request.headers.get('x-csrf-token');
-    const csrfCookie = request.cookies.get(CSRF_COOKIE)?.value;
-    if (!csrfHeader || !csrfCookie || csrfHeader !== csrfCookie) {
-      return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
+    const csrfError = validateCsrf(request);
+    if (csrfError) {
+      return csrfError;
     }
+
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.ip ?? 'unknown';
 
     const json = await request.json();
     const parsed = loginSchema.safeParse(json);
     if (!parsed.success) {
+      security('login.invalid_credentials', { ip });
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
     const { username, password, totp } = parsed.data;
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.ip ?? 'unknown';
     const rateLimitKey = `${ip}:${username}`;
 
     if (isRateLimited(rateLimitKey)) {
@@ -38,6 +39,11 @@ export async function POST(request: NextRequest) {
     const reseller = await db.collection('resellers').findOne<{ [key: string]: unknown }>({ _id: username });
 
     if (!reseller || reseller.disabled === true) {
+      security('login.invalid_credentials', {
+        username,
+        ip,
+        reason: reseller ? 'disabled' : 'not_found'
+      });
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
@@ -45,6 +51,7 @@ export async function POST(request: NextRequest) {
     const isPasswordValid = await verifyPassword(password, passwordHash);
 
     if (!isPasswordValid) {
+      security('login.invalid_credentials', { username, ip, reason: 'password' });
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
@@ -61,6 +68,7 @@ export async function POST(request: NextRequest) {
         : undefined;
       const totpResult = verifyTotpWithBackups(totp, totpConfig.secret, backupHashes);
       if (!totpResult.valid) {
+        security('login.invalid_totp', { username, ip });
         return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
       }
 
@@ -83,7 +91,7 @@ export async function POST(request: NextRequest) {
     setSessionCookie(token);
     resetRateLimit(rateLimitKey);
 
-    console.info('Successful login', {
+    audit('login.success', {
       user: payload.sub,
       role: payload.role,
       ip,

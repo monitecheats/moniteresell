@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
 
-const SESSION_COOKIE_NAME = 'monite_session';
+const SESSION_COOKIE_CANDIDATES = process.env.NODE_ENV === 'production'
+  ? ['__Host-monite_session', 'monite_session']
+  : ['monite_session'];
 const PUBLIC_PATHS = ['/login', '/register'];
 const PUBLIC_API_PREFIXES = ['/api/auth', '/api/healthz'];
 
@@ -21,6 +23,16 @@ async function isTokenValid(token: string | undefined): Promise<boolean> {
   }
 }
 
+function getSessionCookie(request: NextRequest): string | undefined {
+  for (const name of SESSION_COOKIE_CANDIDATES) {
+    const token = request.cookies.get(name)?.value;
+    if (token) {
+      return token;
+    }
+  }
+  return undefined;
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -32,11 +44,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  const token = getSessionCookie(request);
 
   if (PUBLIC_PATHS.some((path) => pathname.startsWith(path))) {
     if (await isTokenValid(token)) {
-      return NextResponse.redirect(new URL('/', request.url));
+      return NextResponse.redirect(new URL('/dashboard/analytics', request.url));
     }
     return NextResponse.next();
   }
@@ -46,7 +58,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('from', pathname);
+    loginUrl.searchParams.set('from', pathname === '/' ? '/dashboard/analytics' : pathname);
     return NextResponse.redirect(loginUrl);
   }
 

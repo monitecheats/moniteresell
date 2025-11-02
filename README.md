@@ -4,13 +4,13 @@ A secure subscription key management dashboard built with Next.js 14 (App Router
 
 ## Features
 
-- Reseller authentication against the `resellers` collection (legacy SHA-256 and modern bcrypt support).
-- Optional TOTP two-factor authentication challenge.
-- CSRF protection via double-submit token, login rate limiting, and JWT-based sessions stored in HttpOnly cookies.
-- shadcn/ui interface powered by Tailwind CSS with responsive layout, accessibility in mind, and light/dark themes persisted in `localStorage`.
-- Dashboard with real-time metrics (total, active, pending, expired keys) and recent key activity with filters.
-- REST API secured by middleware plus JWT verification, using official MongoDB driver with connection pooling and indexes on key collections.
-- Health check endpoint, structured logging without sensitive data, and environment-based configuration.
+- Secure reseller authentication against the `resellers` collection (legacy SHA-256 hashes and modern bcrypt support) with optional TOTP enforcement, CSRF protection, login rate limiting, and JWT-based HttpOnly cookies.
+- Premium shadcn/ui interface with a fixed sidebar, header bar, and responsive two-panel layout featuring dark/light theming via `next-themes`.
+- Analytics dashboard with KPI cards (total, active, pending, expired), device/game filters, and recent-activity table that refreshes automatically every 30 seconds.
+- Subscriptions workspace with toolbar filters (status, game, created-at range, global key search), server-side pagination/sorting, row-level RBAC actions (disable/enable/reset/remove), and device lifecycle operations.
+- Create-subscription modal that validates allowed games, devices, and durations, calculates credit costs in real time, and performs atomic MongoDB debit + key creation transactions.
+- REST API hardened with Zod validation, RBAC helpers, audit logging, rate limiting, and CSRF enforcement for all state-changing requests, plus automatic index provisioning for keys, devices, and games collections.
+- Observability utilities including structured login/audit logs and `/api/healthz` for deployment readiness checks.
 
 ## Requirements
 
@@ -59,18 +59,26 @@ npm run lint    # run Next.js linting
 
 ## API Endpoints
 
-- `GET /api/metrics/keys` – Returns key counts (total, active, pending, expired). Requires authentication.
-- `GET /api/keys/recent?limit=10&game_uid=<uid>&device=<device>` – Lists recent keys respecting filters. Requires authentication.
-- `GET /api/auth/me` – Returns the authenticated reseller payload.
-- `GET /api/healthz` – Health check (MongoDB ping + collection count).
+All authenticated endpoints expect the session cookie issued by the login flow and the `X-CSRF-Token` header for non-GET requests.
 
-All authenticated endpoints expect the session cookie issued by the login flow.
+- `GET /api/metrics/keys` – Key counts (total, active, pending, expired) using OWASP-aligned status rules.
+- `GET /api/keys/recent` – Latest key events with optional `limit`, `game_uid`, and `device` filters.
+- `GET /api/subscriptions` – Server-side filtered subscriptions (`status`, `q`, `game_uid`, `from`, `to`, `page`, `pageSize`, `sort`).
+- `POST /api/subscriptions` – Create subscription batches with atomic credit debit and key insertion.
+- `POST /api/subscriptions/:id/{disable|enable|reset|delete}` – RBAC-enforced lifecycle actions per subscription.
+- `POST /api/devices/:udid/{disable|enable}` – Device state controls guarded by device permissions.
+- `GET /api/games` – Returns allowed product catalog for the authenticated reseller.
+- `GET /api/auth/me` – Hydrated reseller profile with permissions, allowed games, and credit balance.
+- `POST /api/auth/{login|register|logout}` – Authentication flows with CSRF validation and rate limiting.
+- `GET /api/healthz` – MongoDB connectivity probe and basic metadata.
 
 ## UI Overview
 
-- `/login` – Username/password form with TOTP modal. Errors are generic to avoid leaking account existence.
-- `/register` – Account creation with real-time validation hints, password policy, and success feedback.
-- `/` – Dashboard with KPI cards, theme toggle, logout button, and recent activity table supporting game UID and device filtering. Metrics refresh automatically every 30 seconds or on manual refresh.
+- `/login` – Credential form with progressive TOTP challenge, CSRF token bootstrap, and abuse-safe messaging.
+- `/register` – Reseller onboarding with inline validation, password strength hints, and bcrypt storage.
+- `/dashboard/analytics` – KPI cards, activity feed, and quick filters for monitoring key status in real time.
+- `/dashboard/subscriptions` – Toolbar-driven data table with bulk filters, pagination controls, row actions, device operations, and credit-aware create modal.
+- Global header – Search bar (key prefix), theme toggle, user menu, credit summary, and context-aware “Create subscription” action. The layout is fully responsive and accessible (ARIA labelling, focus rings, AA contrast).
 
 ## Development Notes
 

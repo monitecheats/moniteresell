@@ -6,7 +6,17 @@ import jwt from 'jsonwebtoken';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 
-export const SESSION_COOKIE_NAME = 'monite_session';
+const BASE_SESSION_COOKIE_NAME = 'monite_session';
+
+function resolveSessionCookieName(): string {
+  if (process.env.NODE_ENV === 'production') {
+    return `__Host-${BASE_SESSION_COOKIE_NAME}`;
+  }
+  return BASE_SESSION_COOKIE_NAME;
+}
+
+export const SESSION_COOKIE_NAME = resolveSessionCookieName();
+export const CSRF_COOKIE_NAME = 'monite_csrf';
 const SESSION_EXPIRATION_SECONDS = 60 * 60 * 12; // 12 hours
 
 authenticator.options = {
@@ -106,13 +116,18 @@ export function verifySessionToken(token: string): SessionPayload | null {
   }
 }
 
+export const SESSION_COOKIE_CANDIDATES = [SESSION_COOKIE_NAME];
+if (!SESSION_COOKIE_CANDIDATES.includes(BASE_SESSION_COOKIE_NAME)) {
+  SESSION_COOKIE_CANDIDATES.push(BASE_SESSION_COOKIE_NAME);
+}
+
 export function setSessionCookie(token: string): void {
   const cookieStore = cookies();
   cookieStore.set({
     name: SESSION_COOKIE_NAME,
     value: token,
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: process.env.NODE_ENV !== 'development',
     sameSite: 'lax',
     maxAge: SESSION_EXPIRATION_SECONDS,
     path: '/'
@@ -121,23 +136,30 @@ export function setSessionCookie(token: string): void {
 
 export function clearSessionCookie(): void {
   const cookieStore = cookies();
-  cookieStore.set({
-    name: SESSION_COOKIE_NAME,
-    value: '',
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 0,
-    path: '/'
+  SESSION_COOKIE_CANDIDATES.forEach((cookieName) => {
+    cookieStore.set({
+      name: cookieName,
+      value: '',
+      httpOnly: true,
+      secure: process.env.NODE_ENV !== 'development',
+      sameSite: 'lax',
+      maxAge: 0,
+      path: '/'
+    });
   });
 }
 
 export function getSessionFromRequest(request: NextRequest): SessionPayload | null {
-  const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-  if (!token) {
-    return null;
+  for (const cookieName of SESSION_COOKIE_CANDIDATES) {
+    const token = request.cookies.get(cookieName)?.value;
+    if (token) {
+      const session = verifySessionToken(token);
+      if (session) {
+        return session;
+      }
+    }
   }
-  return verifySessionToken(token);
+  return null;
 }
 
 export const csrfTokenSchema = z.object({

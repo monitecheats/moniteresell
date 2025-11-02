@@ -1,14 +1,12 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { generateCsrfToken } from '@/lib/auth';
-
-const CSRF_COOKIE = 'monite_csrf';
+import { CSRF_COOKIE_NAME, generateCsrfToken } from '@/lib/auth';
 
 export async function GET() {
   const token = generateCsrfToken();
   const cookieStore = cookies();
   cookieStore.set({
-    name: CSRF_COOKIE,
+    name: CSRF_COOKIE_NAME,
     value: token,
     httpOnly: false,
     secure: process.env.NODE_ENV === 'production',

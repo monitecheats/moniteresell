@@ -2,15 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/mongodb';
 import { registerSchema } from '@/lib/schemas';
 import { hashPassword } from '@/lib/auth';
-
-const CSRF_COOKIE = 'monite_csrf';
+import { validateCsrf } from '@/lib/csrf';
+import { audit } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
-    const csrfHeader = request.headers.get('x-csrf-token');
-    const csrfCookie = request.cookies.get(CSRF_COOKIE)?.value;
-    if (!csrfHeader || !csrfCookie || csrfHeader !== csrfCookie) {
-      return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
+    const csrfError = validateCsrf(request);
+    if (csrfError) {
+      return csrfError;
     }
 
     const json = await request.json();
@@ -37,10 +36,12 @@ export async function POST(request: NextRequest) {
       name: username,
       role: 'reseller',
       permissions: [],
+      allowed_games: [],
+      credits: 0,
       created_at: new Date()
     });
 
-    console.info('New reseller registered', { username });
+    audit('reseller.registered', { username });
 
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch (error) {
