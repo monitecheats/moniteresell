@@ -1,19 +1,12 @@
 'use client';
 
+import Link from 'next/link';
 import { FormEvent, useEffect, useState } from 'react';
-import {
-  Alert,
-  Box,
-  Button,
-  Container,
-  Link,
-  Paper,
-  Stack,
-  TextField,
-  Typography
-} from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert } from '@/components/ui/alert';
 
 interface RegisterError {
   fieldErrors?: Record<string, string[]>;
@@ -47,6 +40,7 @@ export default function RegisterPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (loading) return;
     setLoading(true);
     setError(null);
 
@@ -81,154 +75,106 @@ export default function RegisterPage() {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        bgcolor: 'background.default',
-        display: 'flex',
-        alignItems: 'center',
-        py: { xs: 6, md: 8 }
-      }}
-    >
-      <Container maxWidth="md">
-        <Paper
-          variant="outlined"
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', md: 'row' },
-            borderRadius: 4,
-            overflow: 'hidden'
-          }}
-        >
-          <Box
-            sx={{
-              flexBasis: { xs: '100%', md: '40%' },
-              display: { xs: 'none', md: 'flex' },
-              flexDirection: 'column',
-              justifyContent: 'center',
-              gap: 3,
-              p: 5,
-              background: 'linear-gradient(135deg, #34a853, #0f9d58)',
-              color: '#fff'
-            }}
-          >
-            <Box
-              sx={{
-                width: 56,
-                height: 56,
-                borderRadius: 2,
-                bgcolor: 'rgba(255,255,255,0.12)',
-                display: 'grid',
-                placeItems: 'center',
-                fontWeight: 700,
-                fontSize: 24,
-                letterSpacing: 1.5
-              }}
-            >
-              M
-            </Box>
-            <Box>
-              <Typography variant="h4" fontWeight={700} gutterBottom>
-                Create your account
-              </Typography>
-              <Typography variant="body1" sx={{ opacity: 0.9 }}>
-                Start managing subscriptions with a layout inspired by Google&apos;s productivity
-                tools.
-              </Typography>
-            </Box>
-          </Box>
-
-          <Box
-            component="form"
-            onSubmit={handleSubmit}
-            sx={{
-              flex: 1,
-              p: { xs: 4, sm: 6 },
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              gap: 3
-            }}
-          >
-            <Box>
-              <Typography component="h1" variant="h4" fontWeight={700} gutterBottom>
-                Create account
-              </Typography>
-              <Typography color="text.secondary">
-                Use a strong password (at least 10 characters) to keep your workspace secure.
-              </Typography>
-            </Box>
-            {error?.error && <Alert severity="error">{error.error}</Alert>}
-            {success && (
-              <Alert icon={<CheckCircleIcon fontSize="inherit" />} severity="success">
-                Account created! Redirecting to sign in...
-              </Alert>
-            )}
-            <Stack spacing={2.5}>
-              <TextField
-                label="Username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                autoComplete="username"
-                helperText={
-                  error?.fieldErrors?.username?.[0] ?? 'Use lowercase letters, numbers, dots or dashes.'
-                }
-                error={Boolean(error?.fieldErrors?.username)}
-                required
-              />
-              <TextField
-                label="Email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                helperText={error?.fieldErrors?.email?.[0] ?? ''}
-                error={Boolean(error?.fieldErrors?.email)}
-                required
-              />
-              <TextField
-                label="Password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="new-password"
-                helperText={
-                  error?.fieldErrors?.password?.[0] ?? 'Minimum 10 characters with letters and numbers.'
-                }
-                error={Boolean(error?.fieldErrors?.password)}
-                required
-              />
-              <TextField
-                label="Repeat password"
-                type="password"
-                value={repeatPassword}
-                onChange={(e) => setRepeatPassword(e.target.value)}
-                autoComplete="new-password"
-                helperText={error?.fieldErrors?.repeatPassword?.[0] ?? ''}
-                error={Boolean(error?.fieldErrors?.repeatPassword)}
-                required
-              />
-            </Stack>
-            <Stack spacing={2}>
-              <Button
-                type="submit"
-                variant="contained"
-                size="large"
-                disabled={loading || !csrfToken}
-                sx={{ py: 1.2 }}
-              >
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-background via-background to-muted/40">
+      <div className="mx-auto flex w-full max-w-5xl flex-1 items-center px-4 py-16">
+        <div className="grid w-full gap-12 rounded-3xl border bg-card/60 p-8 shadow-sm backdrop-blur sm:grid-cols-2 sm:p-12">
+          <div className="hidden flex-col justify-between sm:flex">
+            <div>
+              <p className="text-sm uppercase tracking-[0.3em] text-muted-foreground">Monite</p>
+              <h1 className="mt-6 text-3xl font-semibold leading-tight">Create your reseller space</h1>
+              <p className="mt-4 text-sm text-muted-foreground">
+                Join the dashboard to manage subscriptions with responsive shadcn/ui components tuned for clarity.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-dashed border-muted p-6">
+              <p className="text-sm font-medium text-muted-foreground">Already registered?</p>
+              <p className="mt-2 text-sm text-muted-foreground">Return to the sign-in page to access your console.</p>
+            </div>
+          </div>
+          <div className="flex flex-col justify-center">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2 text-center sm:text-left">
+                <h2 className="text-2xl font-semibold">Create account</h2>
+                <p className="text-sm text-muted-foreground">
+                  Usernames are lowercase and unique. Passwords must be at least 10 characters.
+                </p>
+              </div>
+              {error?.error && <Alert>{error.error}</Alert>}
+              {success && (
+                <Alert className="border-emerald-500/40 bg-emerald-500/10 text-emerald-600">
+                  Account created! Redirecting…
+                </Alert>
+              )}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="username">Username</Label>
+                  <Input
+                    id="username"
+                    value={username}
+                    onChange={(event) => setUsername(event.target.value)}
+                    autoComplete="username"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {error?.fieldErrors?.username?.[0] ?? 'Use lowercase letters, numbers, dots, or dashes.'}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    autoComplete="email"
+                    required
+                  />
+                  {error?.fieldErrors?.email?.[0] && (
+                    <p className="text-xs text-destructive">{error.fieldErrors.email[0]}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    autoComplete="new-password"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {error?.fieldErrors?.password?.[0] ?? 'Minimum 10 characters with letters and numbers.'}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="repeatPassword">Repeat password</Label>
+                  <Input
+                    id="repeatPassword"
+                    type="password"
+                    value={repeatPassword}
+                    onChange={(event) => setRepeatPassword(event.target.value)}
+                    autoComplete="new-password"
+                    required
+                  />
+                  {error?.fieldErrors?.repeatPassword?.[0] && (
+                    <p className="text-xs text-destructive">{error.fieldErrors.repeatPassword[0]}</p>
+                  )}
+                </div>
+              </div>
+              <Button type="submit" className="w-full" disabled={loading || !csrfToken}>
                 {loading ? 'Creating account…' : 'Create account'}
               </Button>
-              <Typography variant="body2" textAlign="center" color="text.secondary">
+              <p className="text-center text-sm text-muted-foreground">
                 Already have an account?{' '}
-                <Link href="/login" sx={{ fontWeight: 600 }}>
+                <Link className="font-medium text-primary" href="/login">
                   Sign in
                 </Link>
-              </Typography>
-            </Stack>
-          </Box>
-        </Paper>
-      </Container>
-    </Box>
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

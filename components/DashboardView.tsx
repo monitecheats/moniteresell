@@ -1,36 +1,16 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  CircularProgress,
-  Container,
-  Divider,
-  FormControl,
-  Grid,
-  InputLabel,
-  MenuItem,
-  Paper,
-  Select,
-  Skeleton,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TextField,
-  Typography
-} from '@mui/material';
-import LogoutIcon from '@mui/icons-material/Logout';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import { useRouter } from 'next/navigation';
+import { RefreshCw, LogOut } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
-import { useTheme } from '@mui/material/styles';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface Metrics {
   total: number;
@@ -63,9 +43,16 @@ const deviceOptions = [
   { value: 'android', label: 'Android' }
 ];
 
+function formatDate(date: Date | null) {
+  if (!date) return '—';
+  return new Intl.DateTimeFormat('en', {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  }).format(date);
+}
+
 export default function DashboardView() {
   const router = useRouter();
-  const theme = useTheme();
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [metricsError, setMetricsError] = useState<string | null>(null);
   const [keys, setKeys] = useState<KeyItem[]>([]);
@@ -171,232 +158,192 @@ export default function DashboardView() {
     }));
   }, [keys]);
 
-  const renderMetricCard = (title: string, value: number | undefined, color: string) => (
-    <Card
-      variant="outlined"
-      sx={{
-        position: 'relative',
-        height: '100%',
-        borderRadius: 4,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between'
-      }}
-    >
-      <Box sx={{ position: 'absolute', inset: 0, borderRadius: 4, overflow: 'hidden', pointerEvents: 'none' }}>
-        <Box sx={{ height: 4, width: '100%', bgcolor: color }} />
-      </Box>
-      <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1, pt: 3, position: 'relative', zIndex: 1 }}>
-        <Typography variant="subtitle2" color="text.secondary">
-          {title}
-        </Typography>
-        <Typography variant="h4" fontWeight={700} color="text.primary">
-          {value ?? '—'}
-        </Typography>
-      </CardContent>
-    </Card>
-  );
-
   const dashboardReady = metrics && !initialLoading;
 
   return (
-    <Box component="main" sx={{ bgcolor: 'background.default', minHeight: '100vh', py: { xs: 4, md: 6 } }}>
-      <Container maxWidth="lg">
-        <Stack spacing={4}>
-          <Paper
-            variant="outlined"
-            sx={{
-              p: { xs: 3, md: 4 },
-              borderRadius: 4,
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 3,
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}
-          >
-            <Box>
-              <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1 }}>
-                Reseller Console
-              </Typography>
-              <Typography variant="h4" fontWeight={700} gutterBottom>
-                Welcome back{user ? `, ${user.name}` : ''}
-              </Typography>
-              <Typography color="text.secondary" maxWidth={420}>
-                Track key performance, monitor activity, and manage your catalogue with a
-                workspace inspired by Google&apos;s clean, focused surfaces.
-              </Typography>
-            </Box>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <ThemeToggle />
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<LogoutIcon />}
-                onClick={handleLogout}
-              >
-                Sign out
-              </Button>
-            </Stack>
-          </Paper>
+    <div className="min-h-screen bg-background">
+      <header className="border-b bg-card/60 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-6">
+          <div className="space-y-1">
+            <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Monite</p>
+            <h1 className="text-2xl font-semibold">Reseller dashboard</h1>
+            <p className="text-sm text-muted-foreground">
+              Track subscription performance and review the latest key activity in real time.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                fetchMetrics();
+                fetchKeys();
+              }}
+              title="Refresh metrics"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" /> Refresh
+            </Button>
+            <Button type="button" variant="destructive" onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" /> Logout
+            </Button>
+          </div>
+        </div>
+      </header>
 
-          {metricsError && <Alert severity="error">{metricsError}</Alert>}
+      <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-10">
+        <section>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {dashboardReady ? (
+              [
+                { title: 'Total keys', value: metrics?.total },
+                { title: 'Active keys', value: metrics?.active },
+                { title: 'Pending keys', value: metrics?.pending },
+                { title: 'Expired keys', value: metrics?.expired }
+              ].map((card) => (
+                <Card key={card.title} className="border-muted/80">
+                  <CardHeader>
+                    <CardDescription>{card.title}</CardDescription>
+                    <CardTitle className="text-3xl font-semibold">{card.value ?? '—'}</CardTitle>
+                  </CardHeader>
+                </Card>
+              ))
+            ) : (
+              Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-32 rounded-xl" />)
+            )}
+          </div>
+          {metricsError && <Alert className="mt-4">{metricsError}</Alert>}
+        </section>
 
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={3}>
-              {dashboardReady ? (
-                renderMetricCard('Total keys', metrics?.total, theme.palette.primary.main)
-              ) : (
-                <Card variant="outlined" sx={{ borderRadius: 4 }}>
-                  <CardContent>
-                    <Skeleton variant="text" height={28} width="60%" />
-                    <Skeleton variant="text" height={48} width="40%" />
-                  </CardContent>
-                </Card>
-              )}
-            </Grid>
-            <Grid item xs={12} md={3}>
-              {dashboardReady ? (
-                renderMetricCard('Active', metrics?.active, theme.palette.success.main)
-              ) : (
-                <Card variant="outlined" sx={{ borderRadius: 4 }}>
-                  <CardContent>
-                    <Skeleton variant="text" height={28} width="60%" />
-                    <Skeleton variant="text" height={48} width="40%" />
-                  </CardContent>
-                </Card>
-              )}
-            </Grid>
-            <Grid item xs={12} md={3}>
-              {dashboardReady ? (
-                renderMetricCard('Pending', metrics?.pending, theme.palette.warning.main)
-              ) : (
-                <Card variant="outlined" sx={{ borderRadius: 4 }}>
-                  <CardContent>
-                    <Skeleton variant="text" height={28} width="60%" />
-                    <Skeleton variant="text" height={48} width="40%" />
-                  </CardContent>
-                </Card>
-              )}
-            </Grid>
-            <Grid item xs={12} md={3}>
-              {dashboardReady ? (
-                renderMetricCard('Expired', metrics?.expired, theme.palette.error.main)
-              ) : (
-                <Card variant="outlined" sx={{ borderRadius: 4 }}>
-                  <CardContent>
-                    <Skeleton variant="text" height={28} width="60%" />
-                    <Skeleton variant="text" height={48} width="40%" />
-                  </CardContent>
-                </Card>
-              )}
-            </Grid>
-          </Grid>
-
-          <Card variant="outlined" sx={{ borderRadius: 4 }}>
-            <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-              <Stack
-                direction={{ xs: 'column', md: 'row' }}
-                spacing={2}
-                alignItems={{ xs: 'stretch', md: 'center' }}
-              >
-                <Box sx={{ flexGrow: 1 }}>
-                  <Typography variant="h6" fontWeight={600} gutterBottom>
-                    Recent activity
-                  </Typography>
-                  <Typography color="text.secondary" variant="body2">
-                    Filter keys by game or device to focus on a particular cohort.
-                  </Typography>
-                </Box>
-                <TextField
-                  label="Filter by game UID"
-                  value={gameFilter}
-                  onChange={(e) => setGameFilter(e.target.value)}
-                  size="small"
-                  sx={{ minWidth: 180 }}
-                />
-                <FormControl sx={{ minWidth: 160 }} size="small">
-                  <InputLabel id="device-select">Device</InputLabel>
-                  <Select
-                    labelId="device-select"
+        <section className="grid gap-6 lg:grid-cols-[2fr,1fr]">
+          <Card className="border-muted/80">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Recent activity</CardTitle>
+                <CardDescription>Latest key events from the last synchronisation window.</CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="space-y-1">
+                  <Label htmlFor="gameFilter" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Game UID
+                  </Label>
+                  <Input
+                    id="gameFilter"
+                    value={gameFilter}
+                    onChange={(event) => setGameFilter(event.target.value)}
+                    placeholder="Search by game UID"
+                    className="w-48"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="deviceFilter" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Device
+                  </Label>
+                  <select
+                    id="deviceFilter"
                     value={deviceFilter}
-                    label="Device"
                     onChange={(event) => setDeviceFilter(event.target.value)}
+                    className="flex h-10 w-40 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     {deviceOptions.map((option) => (
-                      <MenuItem key={option.value} value={option.value}>
+                      <option key={option.value} value={option.value}>
                         {option.label}
-                      </MenuItem>
+                      </option>
                     ))}
-                  </Select>
-                </FormControl>
-                <Button
-                  variant="text"
-                  startIcon={<RefreshIcon />}
-                  onClick={() => {
-                    fetchMetrics();
-                    fetchKeys();
-                  }}
-                >
-                  Refresh
-                </Button>
-              </Stack>
-
-              <Divider sx={{ my: 3 }} />
-
-              {keysError && <Alert severity="error">{keysError}</Alert>}
-
-              {keysLoading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-                  <CircularProgress />
-                </Box>
-              ) : formattedKeys.length === 0 ? (
-                <Typography color="text.secondary" textAlign="center">
-                  No activity to display.
-                </Typography>
-              ) : (
-                <Table
-                  size="medium"
-                  sx={{
-                    '& th': {
-                      textTransform: 'uppercase',
-                      fontSize: 12,
-                      color: 'text.secondary'
-                    }
-                  }}
-                >
-                  <TableHead>
+                  </select>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {keysError && <Alert className="mb-4">{keysError}</Alert>}
+              <div className="rounded-xl border border-dashed border-muted/60">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell>Key</TableCell>
-                      <TableCell>Device</TableCell>
-                      <TableCell>Game</TableCell>
-                      <TableCell>Game UID</TableCell>
-                      <TableCell>Expires</TableCell>
-                      <TableCell>Created</TableCell>
+                      <TableHead>Key</TableHead>
+                      <TableHead>Game</TableHead>
+                      <TableHead>Device</TableHead>
+                      <TableHead>Expires</TableHead>
+                      <TableHead>Duration</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead>Updated</TableHead>
                     </TableRow>
-                  </TableHead>
+                  </TableHeader>
                   <TableBody>
-                    {formattedKeys.map((item) => (
-                      <TableRow key={item.id} hover>
-                        <TableCell sx={{ fontWeight: 500 }}>{item.id}</TableCell>
-                        <TableCell>{item.device ?? '—'}</TableCell>
-                        <TableCell>{item.game ?? '—'}</TableCell>
-                        <TableCell>{item.game_uid ?? '—'}</TableCell>
-                        <TableCell>
-                          {item.expiresDate ? item.expiresDate.toLocaleString() : '—'}
-                        </TableCell>
-                        <TableCell>
-                          {item.createdDate ? item.createdDate.toLocaleString() : '—'}
+                    {keysLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="py-12 text-center text-sm text-muted-foreground">
+                          Loading recent keys…
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ) : formattedKeys.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="py-12 text-center text-sm text-muted-foreground">
+                          No recent activity to display.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      formattedKeys.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-medium">{item.id}</TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span>{item.game ?? '—'}</span>
+                              <span className="text-xs text-muted-foreground">{item.game_uid ?? '—'}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="capitalize">{item.device ?? 'Unassigned'}</TableCell>
+                          <TableCell>{formatDate(item.expiresDate)}</TableCell>
+                          <TableCell>{item.duration ?? '—'}</TableCell>
+                          <TableCell>{formatDate(item.createdDate)}</TableCell>
+                          <TableCell>{formatDate(item.updatedDate)}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-muted/80">
+            <CardHeader>
+              <CardTitle>Account</CardTitle>
+              <CardDescription>Your authenticated reseller identity.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {user ? (
+                <>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Name</p>
+                    <p className="text-base font-semibold">{user.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Username</p>
+                    <p className="text-base font-semibold">{user.sub}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Role</p>
+                    <p className="text-base font-semibold capitalize">{user.role}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Email</p>
+                    <p className="text-base font-semibold">{user.email ?? '—'}</p>
+                  </div>
+                </>
+              ) : initialLoading ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-4 w-2/3" />
+                </div>
+              ) : (
+                <Alert>Unable to load account details.</Alert>
               )}
             </CardContent>
           </Card>
-        </Stack>
-      </Container>
-    </Box>
+        </section>
+      </main>
+    </div>
   );
 }

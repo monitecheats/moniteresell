@@ -1,22 +1,20 @@
 'use client';
 
+import Link from 'next/link';
 import { FormEvent, useEffect, useState } from 'react';
-import {
-  Alert,
-  Box,
-  Button,
-  Container,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Link,
-  Paper,
-  Stack,
-  TextField,
-  Typography
-} from '@mui/material';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert } from '@/components/ui/alert';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
 
 interface LoginResponse {
   error?: string;
@@ -51,6 +49,7 @@ export default function LoginPage() {
 
   const handleLogin = async (event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
+    if (loading) return;
     setLoading(true);
     setError(null);
     setTotpError(null);
@@ -100,174 +99,123 @@ export default function LoginPage() {
   };
 
   const handleTotpSubmit = async () => {
+    if (loading) return;
     if (totp.length !== 6) {
-      setError('TOTP code must be 6 digits');
+      setTotpError('TOTP code must be 6 digits');
       return;
     }
     await handleLogin();
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        bgcolor: 'background.default',
-        display: 'flex',
-        alignItems: 'center',
-        py: { xs: 6, md: 8 }
-      }}
-    >
-      <Container maxWidth="md">
-        <Paper
-          variant="outlined"
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', md: 'row' },
-            borderRadius: 4,
-            overflow: 'hidden',
-            minHeight: { md: 520 }
-          }}
-        >
-          <Box
-            sx={{
-              flexBasis: { xs: '100%', md: '40%' },
-              display: { xs: 'none', md: 'flex' },
-              flexDirection: 'column',
-              justifyContent: 'center',
-              gap: 3,
-              p: 5,
-              background: 'linear-gradient(135deg, #1a73e8, #174ea6)',
-              color: '#fff'
-            }}
-          >
-            <Box
-              sx={{
-                width: 56,
-                height: 56,
-                borderRadius: 2,
-                bgcolor: 'rgba(255,255,255,0.12)',
-                display: 'grid',
-                placeItems: 'center',
-                fontWeight: 700,
-                fontSize: 24,
-                letterSpacing: 1.5
-              }}
-            >
-              M
-            </Box>
-            <Box>
-              <Typography variant="h4" fontWeight={700} gutterBottom>
-                Monite Reseller
-              </Typography>
-              <Typography variant="body1" sx={{ opacity: 0.9 }}>
-                Sign in to a Google-inspired console with calm surfaces and confident
-                typography.
-              </Typography>
-            </Box>
-          </Box>
-
-          <Box
-            component="form"
-            onSubmit={handleLogin}
-            sx={{
-              flex: 1,
-              p: { xs: 4, sm: 6 },
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              gap: 3
-            }}
-          >
-            <Box>
-              <Typography component="h1" variant="h4" fontWeight={700} gutterBottom>
-                Sign in
-              </Typography>
-              <Typography color="text.secondary">
-                Access your reseller dashboard securely with username and password.
-              </Typography>
-            </Box>
-            {error && <Alert severity="error">{error}</Alert>}
-            <Stack spacing={2.5}>
-              <TextField
-                label="Username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                autoComplete="username"
-                fullWidth
-                required
-              />
-              <TextField
-                label="Password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-                fullWidth
-                required
-              />
-            </Stack>
-            <Stack spacing={2}>
-              <Button
-                type="submit"
-                variant="contained"
-                size="large"
-                disabled={loading || !csrfToken}
-                sx={{ py: 1.2 }}
-              >
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-background via-background to-muted/40">
+      <div className="mx-auto flex w-full max-w-5xl flex-1 items-center px-4 py-16">
+        <div className="grid w-full gap-12 rounded-3xl border bg-card/60 p-8 shadow-sm backdrop-blur sm:grid-cols-2 sm:p-12">
+          <div className="hidden flex-col justify-between sm:flex">
+            <div>
+              <p className="text-sm uppercase tracking-[0.3em] text-muted-foreground">Monite</p>
+              <h1 className="mt-6 text-3xl font-semibold leading-tight">Secure reseller console</h1>
+              <p className="mt-4 text-sm text-muted-foreground">
+                Access live subscription metrics, recent key activity, and account controls in a calm interface inspired by
+                shadcn/ui principles.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-dashed border-muted p-6">
+              <p className="text-sm font-medium text-muted-foreground">Need an account?</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Request access from an administrator to start managing your reseller keys.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col justify-center">
+            <form onSubmit={handleLogin} className="space-y-6">
+              <div className="space-y-2 text-center sm:text-left">
+                <h2 className="text-2xl font-semibold">Sign in</h2>
+                <p className="text-sm text-muted-foreground">Use your reseller credentials to continue.</p>
+              </div>
+              {error && <Alert>{error}</Alert>}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="username">Username</Label>
+                  <Input
+                    id="username"
+                    value={username}
+                    onChange={(event) => setUsername(event.target.value)}
+                    autoComplete="username"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    autoComplete="current-password"
+                    required
+                  />
+                </div>
+              </div>
+              <Button type="submit" className="w-full" disabled={loading || !csrfToken}>
                 {loading ? 'Signing in…' : 'Sign in'}
               </Button>
-              <Typography variant="body2" textAlign="center" color="text.secondary">
+              <p className="text-center text-sm text-muted-foreground">
                 Don&apos;t have an account?{' '}
-                <Link href="/register" sx={{ fontWeight: 600 }}>
-                  Create one
+                <Link className="font-medium text-primary" href="/register">
+                  Register
                 </Link>
-              </Typography>
-            </Stack>
-          </Box>
-        </Paper>
-      </Container>
-
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
       <Dialog
         open={totpStep}
-        onClose={() => {
-          setTotpStep(false);
-          setTotp('');
-          setTotpError(null);
+        onOpenChange={(open) => {
+          setTotpStep(open);
+          if (!open) {
+            setTotp('');
+            setTotpError(null);
+          }
         }}
-        aria-labelledby="totp-dialog-title"
       >
-        <DialogTitle id="totp-dialog-title">Two-step verification</DialogTitle>
         <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              Enter the 6-digit code from your authenticator app to continue.
-            </Typography>
-            <TextField
-              label="Verification code"
+          <DialogHeader>
+            <DialogTitle>Two-factor authentication</DialogTitle>
+            <DialogDescription>Enter the 6-digit verification code from your authenticator app.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="totp">One-time code</Label>
+            <Input
+              id="totp"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={6}
               value={totp}
-              onChange={(e) => setTotp(e.target.value.replace(/[^0-9]/g, ''))}
-              inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 6 }}
-              autoFocus
-              error={Boolean(totpError)}
-              helperText={totpError ?? ''}
+              onChange={(event) => setTotp(event.target.value.replace(/[^0-9]/g, ''))}
+              autoComplete="one-time-code"
             />
-          </Stack>
+            {totpError && <p className="text-sm text-destructive">{totpError}</p>}
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setTotpStep(false);
+                setTotp('');
+                setTotpError(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleTotpSubmit} disabled={loading}>
+              {loading ? 'Verifying…' : 'Verify code'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button
-            onClick={() => {
-              setTotpStep(false);
-              setTotp('');
-            }}
-            disabled={loading}
-          >
-            Cancel
-          </Button>
-          <Button onClick={handleTotpSubmit} variant="contained" disabled={loading}>
-            Verify
-          </Button>
-        </DialogActions>
       </Dialog>
-    </Box>
+    </div>
   );
 }

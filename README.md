@@ -1,13 +1,13 @@
 # Monite Resell Dashboard
 
-A secure subscription key management dashboard built with Next.js 14 (App Router), TypeScript, Material UI, and MongoDB.
+A secure subscription key management dashboard built with Next.js 14 (App Router), TypeScript, shadcn/ui, and MongoDB.
 
 ## Features
 
 - Reseller authentication against the `resellers` collection (legacy SHA-256 and modern bcrypt support).
 - Optional TOTP two-factor authentication challenge.
 - CSRF protection via double-submit token, login rate limiting, and JWT-based sessions stored in HttpOnly cookies.
-- Material UI interface with responsive layout, accessibility in mind, and light/dark themes persisted in `localStorage`.
+- shadcn/ui interface powered by Tailwind CSS with responsive layout, accessibility in mind, and light/dark themes persisted in `localStorage`.
 - Dashboard with real-time metrics (total, active, pending, expired keys) and recent key activity with filters.
 - REST API secured by middleware plus JWT verification, using official MongoDB driver with connection pooling and indexes on key collections.
 - Health check endpoint, structured logging without sensitive data, and environment-based configuration.
@@ -75,7 +75,7 @@ All authenticated endpoints expect the session cookie issued by the login flow.
 ## Development Notes
 
 - The project uses Next.js App Router with server components for routing and client components for interactive views.
-- Material UI integrates through `@mui/material-nextjs` for optimized SSR and emotion caching.
+- The UI layer is composed of shadcn/ui primitives styled with Tailwind CSS and `next-themes` for client-side theme persistence.
 - Session cookies are protected with `SameSite=Lax`, `HttpOnly`, and `Secure` (in production). Middleware blocks access to protected routes when the JWT is missing or invalid.
 - CSRF tokens are double-submit cookies. API handlers validate tokens from the `X-CSRF-Token` header.
 - Logging avoids sensitive payloads; only metadata such as username, role, IP, and user-agent are logged on successful login attempts.

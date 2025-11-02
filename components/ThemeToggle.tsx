@@ -1,23 +1,30 @@
 'use client';
 
-import { IconButton, Tooltip } from '@mui/material';
-import LightModeIcon from '@mui/icons-material/LightMode';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
 import { useTheme } from 'next-themes';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
+import { Moon, Sun } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function ThemeToggle() {
   const { theme, setTheme } = useTheme();
+
+  const label = useMemo(() => (theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'), [theme]);
 
   const handleToggle = useCallback(() => {
     setTheme(theme === 'light' ? 'dark' : 'light');
   }, [theme, setTheme]);
 
   return (
-    <Tooltip title="Toggle theme">
-      <IconButton aria-label="Toggle theme" color="inherit" onClick={handleToggle} size="large">
-        {theme === 'light' ? <DarkModeIcon /> : <LightModeIcon />}
-      </IconButton>
-    </Tooltip>
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      aria-label={label}
+      title={label}
+      onClick={handleToggle}
+      className="rounded-full"
+    >
+      {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+    </Button>
   );
 }

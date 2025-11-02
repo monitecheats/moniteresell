@@ -1,11 +1,10 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter';
-import { ThemeProvider as NextThemesProvider } from 'next-themes';
-import AppThemeProvider from '@/components/AppThemeProvider';
+import { ThemeProvider } from '@/components/theme-provider';
+import { cn } from '@/lib/utils';
 import './globals.css';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
   title: 'Monite Resell Dashboard',
@@ -15,17 +14,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
-        <AppRouterCacheProvider>
-          <NextThemesProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem={false}
-            storageKey="monite-theme"
-          >
-            <AppThemeProvider>{children}</AppThemeProvider>
-          </NextThemesProvider>
-        </AppRouterCacheProvider>
+      <body className={cn('min-h-screen bg-background font-sans antialiased', inter.variable)}>
+        <ThemeProvider defaultTheme="dark" enableSystem={false} storageKey="monite-theme">
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
